@@ -16,19 +16,23 @@
   "devDependencies": {
     "@oclif/dev-cli": "^1",
     "@oclif/test": "^1",
-    "@points/shared": "/Users/joe307bad/Source/points/Shared.Points",
     "@types/chai": "^4",
     "@types/mocha": "^5",
     "@types/node": "^10",
     "chai": "^4",
+    "colors": "^1.4.0",
+    "dotenv": "^8.2.0",
     "eslint": "^5.13",
     "eslint-config-oclif": "^3.1",
     "eslint-config-oclif-typescript": "^0.1",
     "fp-ts": "^2.7.0",
     "globby": "^10",
+    "husky": "^4.2.5",
     "io-ts": "^2.2.7",
     "mocha": "^5",
     "nyc": "^14",
+    "points": "https://github.com/joe307bad/points",
+    "sync-dotenv": "^2.6.1",
     "ts-node": "^8",
     "tsyringe": "^4.3.0",
     "typescript": "3.9.6"
@@ -50,6 +54,11 @@
   "main": "lib/index.js",
   "oclif": {
     "commands": "./lib/commands",
+    "hooks": {
+      "init": [
+        "./lib/hooks/init/init"
+      ]
+    },
     "bin": "pcli",
     "plugins": [
       "@oclif/plugin-help"
@@ -61,7 +70,13 @@
     "posttest": "eslint . --ext .ts --config .eslintrc",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "sync-env": "sync-dotenv"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn sync-env"
+    }
   },
   "types": "lib/index.d.ts"
 }

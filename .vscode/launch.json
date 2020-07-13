@@ -16,8 +16,7 @@
                 "${workspaceFolder}/lib/**/*.js"
             ],
             "args": [
-                "achievements:analyzer",
-                "--file=/Users/joe307bad/Source/jbhs-scripts/roles/points.api/files/achievment-management/achievements.json"
+                "achievements:analyzer"
             ],
             "console": "integratedTerminal"
         }
