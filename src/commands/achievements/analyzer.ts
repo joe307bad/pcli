@@ -1,7 +1,7 @@
 import { Command, flags } from '@oclif/command'
-import { fromNullable, fold, chain } from 'fp-ts/lib/Option';
+import { fromNullable, fold, chain, map } from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/pipeable';
-import { left, right, Either, isLeft } from 'fp-ts/lib/Either';
+import { left, right, Either, isLeft, toError } from 'fp-ts/lib/Either';
 import * as te from 'fp-ts/lib/TaskEither';
 
 import env from '../../shared/env';
@@ -29,15 +29,12 @@ export default class Analyzer extends Command {
     async run() {
         const { flags } = this.parse(Analyzer)
 
-        const file: Either<Error, string> = pipe(
+        const file = pipe(
             fromNullable(flags.file),
             chain(isEmpty),
+            chain(() => env.ACHIEVEMENTS_JSON),
             fold(
-                () => pipe(env.ACHIEVEMENTS_JSON,
-                    fold(
-                        () => left(Error(ANALYZER_ERRORS.NO_ACHIEVEMENTS_JSON_SPECIFIED)),
-                        f => right(f))
-                ),
+                () => left(Error(ANALYZER_ERRORS.NO_ACHIEVEMENTS_JSON_SPECIFIED)),
                 f => right(f)
             )
         )
@@ -45,11 +42,9 @@ export default class Analyzer extends Command {
         if (isLeft(file))
             return console.error(file.left.message);
 
-
         pipe(
             () => analyzer.validateList(file.right),
             te.fold(e => te.of(log.error(e.message)), m => te.of(log.success(m)))
         )()
-
     }
 }

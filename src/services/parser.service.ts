@@ -1,4 +1,4 @@
-import t from 'io-ts';
+import * as t from 'io-ts';
 import { failure } from 'io-ts/lib/PathReporter';
 import { pipe } from 'fp-ts/lib/pipeable'
 import { Either, fold, left, right } from 'fp-ts/lib/Either'
@@ -15,20 +15,20 @@ type TDecoder<A> = (i: unknown) => Either<t.Errors, A>;
 
 export class Parser {
     static JSON = <T>(json: string, fileName: string, decoder: TDecoder<T>) =>
-        new Promise<Either<string, T>>(resolve => {
+        new Promise<Either<Error, T>>(resolve => {
             try {
                 const parsed = JSON.parse(json);
                 pipe(
                     decoder(parsed),
                     fold(
                         errors => resolve(
-                            left(PARSER_ERROR.ERROR_DECODING_JSON(errors, fileName))
+                            left(Error(PARSER_ERROR.ERROR_DECODING_JSON(errors, fileName)))
                         ),
                         decoded => resolve(right(decoded))
                     )
                 );
             } catch (e) {
-                resolve(left(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e)));
+                resolve(left(Error(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e))));
             }
         })
 }

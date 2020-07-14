@@ -1,13 +1,12 @@
-import { AchievementDto } from 'points/Shared.Points';
-import { type, string, number, union, undefined, TypeOf } from 'io-ts'
+import * as t from 'io-ts'
 
 // TODO Validate achievement categories based on JSON file of categories
-const RAchievement = type({
-    name: string,
-    description: string,
-    category: string,
-    points: number,
-    photo: union([string, undefined])
+export const RAchievement = t.type({
+    name: t.string,
+    description: t.string,
+    category: t.string,
+    points: t.number,
+    photo: t.union([t.string, t.null])
 });
 
-type TAchievement = TypeOf<typeof RAchievement>;
+export type TAchievement = t.TypeOf<typeof RAchievement>;
