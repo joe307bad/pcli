@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
-import { tryCatch, chain, map } from 'fp-ts/lib/TaskEither'
-import { toError } from 'fp-ts/lib/Either';
+import { tryCatch, chain, map, fromEither, fold, right, left } from 'fp-ts/lib/TaskEither'
+import * as e from 'fp-ts/lib/Either';
 import { pipe } from 'fp-ts/lib/pipeable';
 import { array } from 'io-ts';
 
@@ -12,22 +12,20 @@ const ANALYZER_ERRORS = {
 }
 
 const ANALYZER_MESSAGES = {
-    WELL_FORMED_ACHIEVEMENTS_JSON: `Achievments JSON is well-formed`
+    WELL_FORMED_ACHIEVMENTS_JSON_FILE: `Achievments JSON is well-formed`
 }
 
 export class Analyzer {
-    static validateList = async (achievementsJsonFile: string) => {
-        const achievementsParsed = async (s: Buffer) => parse.JSON<TAchievement[]>(
-            await fs.readFile(s, 'utf8'), achievementsJsonFile, array(RAchievement).decode
+    static validateList = (achievementsJsonFile: string) => {
+        const achievementsParsed = (s: Buffer) => parse.JSONSync<TAchievement[]>(
+            s.toString(), achievementsJsonFile, array(RAchievement).decode
         )
-
         return pipe(
-            tryCatch(() => fs.readFile(achievementsJsonFile), e => toError(
+            tryCatch(() => fs.readFile(achievementsJsonFile), err => e.toError(
                 ANALYZER_ERRORS.ERROR_GETTING_FILE(achievementsJsonFile, e)
             )),
-            chain(s => tryCatch(() => achievementsParsed(s), toError)),
-            map(() => ANALYZER_MESSAGES.WELL_FORMED_ACHIEVEMENTS_JSON)
-        )()
+            chain(s => fromEither(achievementsParsed(s))),
+        )
 
     }
     exportListToCsv() {

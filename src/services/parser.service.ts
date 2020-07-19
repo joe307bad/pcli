@@ -31,4 +31,19 @@ export class Parser {
                 resolve(left(Error(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e))));
             }
         })
+    static JSONSync = <T>(json: string, fileName: string, decoder: TDecoder<T>) => {
+        try {
+            const parsed = JSON.parse(json);
+            return pipe(
+                decoder(parsed),
+                fold(
+                    errors =>
+                        left(Error(PARSER_ERROR.ERROR_DECODING_JSON(errors, fileName))),
+                    decoded => right(decoded)
+                )
+            );
+        } catch (e) {
+            return left(Error(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e)));
+        }
+    }
 }
