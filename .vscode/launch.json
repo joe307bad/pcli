@@ -19,6 +19,22 @@
                 "achievements:analyzer"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "pcli achievements:changeset",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/bin/run",
+            "outFiles": [
+                "${workspaceFolder}/lib/**/*.js"
+            ],
+            "args": [
+                "achievements:changeset"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }
