@@ -12,7 +12,7 @@ const CHANGESET_ERRORS = {
 }
 
 export default class Changeset extends Command {
-    static description = 'Set of tools to analyze Achievements'
+    static description = 'Perform actions on Achievement List Changesets'
 
     static examples = [
         `$ pcli achievements:changeset`,
