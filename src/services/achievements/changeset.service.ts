@@ -21,14 +21,14 @@ type TChangeset = {
 };
 
 export class Changeset {
-    static getMostRecent = (changesetsDir: string) => {
-        const changesets = fs.readdirSync(changesetsDir);
+    static getMostRecent = (changesetsDirPath: string) => {
+        const changesets = fs.readdirSync(changesetsDirPath);
 
-        const fullPathToChangeset = (p: string) => path.join(changesetsDir, p);
+        const fullPathToChangeset = (p: string) => path.join(changesetsDirPath, p);
 
         const mostRecentChangeset = (cs: string[]) => R.pipe(
             cs,
-            R.sort((a, b) => {
+            R.sort((a: string, b: string) => {
                 var fullpath = fullPathToChangeset(a);
                 var otherFullPath = fullPathToChangeset(b);
                 const creationTime = fs.statSync(fullpath).ctime;
@@ -39,14 +39,13 @@ export class Changeset {
         )
 
         const noChangesetsFoundError =
-            toError(CHANGESET_ERRORS.NO_CHANGSETS_FOUND_IN_CHANGESETS_DIR(changesetsDir))
+            toError(CHANGESET_ERRORS.NO_CHANGSETS_FOUND_IN_CHANGESETS_DIR(changesetsDirPath))
 
         return pipe(
-            tryCatch(() => fs.readdirSync(changesetsDir), err => toError(
-                CHANGESET_ERRORS.ERROR_GETTING_CHANGESETS_DIR(changesetsDir, err)
+            tryCatch(() => fs.readdirSync(changesetsDirPath), err => toError(
+                CHANGESET_ERRORS.ERROR_GETTING_CHANGESETS_DIR(changesetsDirPath, err)
             )),
-            chain(cs => fromNullable(noChangesetsFoundError)(mostRecentChangeset(changesets))
-            ),
+            chain(() => fromNullable(noChangesetsFoundError)(mostRecentChangeset(changesets))),
             fold(left, (s) => right(fullPathToChangeset(s))));
     }
 
@@ -62,10 +61,7 @@ export class Changeset {
                 CHANGESET_ERRORS.ERROR_GETTING_CHANGESET_FILE(changesetPath, err)
             )),
             chain(b => parse.csvSync<TChangeset[]>(b)),
-            fold(
-                e => left(e),
-                (b) => right(b)
-            )
+            //fold(e => left(e), (b) => right(b))
         )
         return c;
     }

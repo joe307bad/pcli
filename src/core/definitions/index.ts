@@ -1,1 +1,2 @@
-export * from './achievment.definition';
+export * from './achievement.definition'
+export * from './changeset.definition'

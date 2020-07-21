@@ -1,14 +1,11 @@
 import { Command, flags } from '@oclif/command'
-import * as fs from 'fs';
-import * as R from 'remeda';
-import * as path from 'path';
 import { isNone } from 'fp-ts/lib/Option';
 import { chain, fold, of } from 'fp-ts/lib/Either';
+import { pipe } from 'fp-ts/lib/pipeable';
 
-import { Changeset as changeset } from '../../services/achievements/changeset.service'
+import { Changeset as changeset } from '../../services'
 import env from '../../shared/env';
 import { Logger as log } from '../../shared/logger';
-import { pipe } from 'fp-ts/lib/pipeable';
 
 const CHANGESET_ERRORS = {
     CHANGESET_DIR_ENV_VAR_NOT_SET: `CHANGESET_DIR env var is not set`
@@ -26,7 +23,6 @@ export default class Changeset extends Command {
     }
 
     async run() {
-        const { flags } = this.parse(Changeset)
 
         const changesetsDir = env.CHANGESETS_DIR
 

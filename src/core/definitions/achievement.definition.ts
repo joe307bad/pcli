@@ -5,8 +5,7 @@ import * as fs from 'fs';
 import { pipe } from 'fp-ts/lib/pipeable';
 
 import env from '../../shared/env';
-import { Parser as parse } from '../../services/parser.service';
-import { bgBlue } from 'colors';
+import { Parser as parse } from '../../services';
 
 const CATEGORY_ERRORS = (filePath: string) => ({
     ENVIRONMENT_VAR_NOT_SET: `Could not read environment variable for Categories JSON file`,
@@ -40,23 +39,21 @@ const RExistentCategory =
                     s.toString(), categoriesJsonFile, t.array(RCategory).decode
                 )
 
-            const isCategoryExistent = (category: unknown, categories: TCategory[]) => categories.some(c => c.name === category)
-                ? e.right(true)
-                : e.left(Error(categoryErrors.CATEGORY_DOES_NOT_EXIST(category)))
+            const isCategoryExistent = (category: unknown, categories: TCategory[]) =>
+                categories.some(c => c.name === category)
+                    ? e.right(true)
+                    : e.left(Error(categoryErrors.CATEGORY_DOES_NOT_EXIST(category)))
 
             const isValidCategory = pipe(
                 isCategoriesJsonFileEnvVarSet,
                 e.chain(j => e.tryCatch(
                     // TODO probably should figure out some way 
-                    // cacheing this file
+                    // cof acheing this file
                     () => fs.readFileSync(j),
-                    err => {
-                        return e.toError(categoryErrors.ERROR_GETTING_FILE)
-                    })
+                    err => e.toError(categoryErrors.ERROR_GETTING_FILE))
                 ),
                 e.chain(availableCategories),
-                e.chain(categories =>
-                    isCategoryExistent(category, categories))
+                e.chain(categories => isCategoryExistent(category, categories))
             )
 
             if (e.isLeft(isValidCategory))
@@ -68,7 +65,6 @@ const RExistentCategory =
         t.identity
     )
 
-// TODO Validate achievement categories based on JSON file of categories
 export const RAchievement = t.type({
     name: t.string,
     description: t.string,
@@ -76,6 +72,5 @@ export const RAchievement = t.type({
     points: t.number,
     photo: t.union([t.string, t.null])
 });
-
 
 export type TAchievement = t.TypeOf<typeof RAchievement>;

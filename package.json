@@ -27,6 +27,7 @@
     "eslint": "^5.13",
     "eslint-config-oclif": "^3.1",
     "eslint-config-oclif-typescript": "^0.1",
+    "eslint-plugin-import": "^2.22.0",
     "fp-ts": "^2.7.0",
     "globby": "^10",
     "husky": "^4.2.5",
@@ -69,6 +70,7 @@
   },
   "repository": "joe307bad/pcli",
   "scripts": {
+    "lint": "eslint ./src/**/*.ts",
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "eslint . --ext .ts --config .eslintrc",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
