@@ -51,10 +51,20 @@ export class Changeset {
 
     static validate = (changesetPath: string) => {
 
-        // TODO map parsed changset (CSV) to json file and validate that
+        // TODO map parsed changset (CSV) to json and validate that
         // against a set of io-ts custom types. If the validation passes, 
         // write the changeset to a json file in the changeset folder (which
         // should be a new method writeToJson
+
+        const changesetParsed = (b: Buffer) => pipe(
+            parse.csvSync<any[]>(b),
+            fold(left, changeset => right(R.pipe(
+                changeset,
+                R.map(hunk => ({
+                    b: 1
+                }))
+            )))
+        )
 
         const c = pipe(
             tryCatch(() => fs.readFileSync(changesetPath), err => toError(
