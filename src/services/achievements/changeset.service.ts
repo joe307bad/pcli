@@ -3,22 +3,26 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { pipe } from 'fp-ts/lib/pipeable';
 import { tryCatch, toError, fromNullable, chain, fold, left, right } from 'fp-ts/lib/Either';
+import { array, ValidationError } from 'io-ts';
+import { failure } from 'io-ts/lib/PathReporter'
 
 import { Parser as parse } from '../../services/parser.service';
+import { RChangeset, TChangeset } from '../../core/definitions';
 
 const CHANGESET_ERRORS = {
     ERROR_GETTING_CHANGESETS_DIR: (path: string, e: any) => `Error accessing Changeset directoory: Directory path:\n${path}\n${e.toString()}`,
     NO_CHANGSETS_FOUND_IN_CHANGESETS_DIR: (path: string) => `There were no Changesets found in the Changeset directory path. Directory path:\n${path}`,
-    ERROR_GETTING_CHANGESET_FILE: (filePath: string, e: any) => `Error reading Changeset file. File path: \n${filePath}\n\n${e.toString()} `
+    ERROR_GETTING_CHANGESET_FILE: (filePath: string, e: any) => `Error reading Changeset file. File path: \n${filePath}\n\n${e.toString()} `,
+    ERROR_MAPPING_RAW_JSON_TO_CHANGESET_WITHOUT_IOTS: (e: any) => `There was an Error mapping the provided and parsed CSV to JSON. This is not an io-ts validation error. Something in the raw CSV does not map to the shape of a Changeset. Error: \n${e.toString()}`,
+    ERROR_DECODING_CHANGESET_JSON: (errors: ValidationError[]) => [
+        `There was a mismatched type while decoding the Changeset`,
+        ...failure(errors),
+    ].join('\n')
 }
 
 const CHANGESET_MESSAGE = {
     CHANGESET_WELL_FORMED: `The Changeset is well-formed`
 }
-
-type TChangeset = {
-    changes: any[]
-};
 
 export class Changeset {
     static getMostRecent = (changesetsDirPath: string) => {
@@ -51,29 +55,57 @@ export class Changeset {
 
     static validate = (changesetPath: string) => {
 
-        // TODO map parsed changset (CSV) to json and validate that
-        // against a set of io-ts custom types. If the validation passes, 
-        // write the changeset to a json file in the changeset folder (which
-        // should be a new method writeToJson
+        const changesetParsed = (mappedChangeset: any[]) => pipe(
+            array(RChangeset).decode(mappedChangeset),
+            fold(
+                errs => left(toError(CHANGESET_ERRORS.ERROR_DECODING_CHANGESET_JSON(errs))),
+                changeset => right(changeset)
+            )
+        );
 
-        const changesetParsed = (b: Buffer) => pipe(
-            parse.csvSync<any[]>(b),
-            fold(left, changeset => right(R.pipe(
-                changeset,
-                R.map(hunk => ({
-                    b: 1
-                }))
-            )))
-        )
-
-        const c = pipe(
+        return pipe(
             tryCatch(() => fs.readFileSync(changesetPath), err => toError(
                 CHANGESET_ERRORS.ERROR_GETTING_CHANGESET_FILE(changesetPath, err)
             )),
-            chain(b => parse.csvSync<TChangeset[]>(b)),
-            //fold(e => left(e), (b) => right(b))
+            chain(b => parse.csvSync<any[]>(b)),
+            chain(Changeset.mapJsonToChangeset),
+            chain(changesetParsed)
+        );
+    }
+
+    private static mapJsonToChangeset = (changeset: any[]) => {
+        const anyToChangeset = () => R.pipe(
+            changeset,
+            R.filter.indexed<any, any[]>((_, i) => i > 0),
+            R.map(hunk => {
+                const [
+                    name,
+                    description,
+                    points,
+                    photo,
+                    category,
+                    newPoints,
+                    newCategory,
+                    newName
+                ] = hunk;
+                return {
+                    name,
+                    description,
+                    points,
+                    photo,
+                    category,
+                    newPoints,
+                    newCategory,
+                    newName
+                };
+            })
         )
-        return c;
+
+        return pipe(
+            tryCatch(() => anyToChangeset(), err => toError(
+                CHANGESET_ERRORS.ERROR_MAPPING_RAW_JSON_TO_CHANGESET_WITHOUT_IOTS(err)
+            ))
+        )
     }
 
 }
