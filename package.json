@@ -1,7 +1,7 @@
 {
   "name": "pcli",
   "description": "Points CLI",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "author": "Joe Badaczewski @joe307bad",
   "bin": {
     "pcli": "./bin/run"
@@ -13,6 +13,8 @@
     "@oclif/plugin-help": "^2",
     "csv-parse": "^4.11.1",
     "csv-stringify": "^5.5.0",
+    "csv-writer": "^1.6.0",
+    "date-fns": "^2.15.0",
     "tslib": "^1"
   },
   "devDependencies": {

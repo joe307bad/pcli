@@ -47,8 +47,6 @@ const RExistentCategory =
             const isValidCategory = pipe(
                 isCategoriesJsonFileEnvVarSet,
                 e.chain(j => e.tryCatch(
-                    // TODO probably should figure out some way 
-                    // cof acheing this file
                     () => fs.readFileSync(j),
                     err => e.toError(categoryErrors.ERROR_GETTING_FILE))
                 ),

@@ -19,7 +19,7 @@ $ npm install -g pcli
 $ pcli COMMAND
 running command...
 $ pcli (-v|--version|version)
-pcli/0.0.0 darwin-x64 node-v10.16.2
+pcli/0.0.2 darwin-x64 node-v14.2.0
 $ pcli --help [COMMAND]
 USAGE
   $ pcli COMMAND
@@ -28,28 +28,44 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`pcli hello [FILE]`](#pcli-hello-file)
+* [`pcli achievements:analyzer`](#pcli-achievementsanalyzer)
+* [`pcli achievements:changeset`](#pcli-achievementschangeset)
 * [`pcli help [COMMAND]`](#pcli-help-command)
 
-## `pcli hello [FILE]`
+## `pcli achievements:analyzer`
 
-describe the command here
+Set of tools to analyze Achievements
 
 ```
 USAGE
-  $ pcli hello [FILE]
+  $ pcli achievements:analyzer
 
 OPTIONS
-  -f, --force
+  -f, --file=file  Achievements JSON file
   -h, --help       show CLI help
-  -n, --name=name  name to print
 
 EXAMPLE
-  $ pcli hello
-  hello world from ./src/hello.ts!
+  $ pcli achievements:analyzer
 ```
 
-_See code: [src/commands/hello.ts](https://github.com/joe307bad/pcli/blob/v0.0.0/src/commands/hello.ts)_
+_See code: [src/commands/achievements/analyzer.ts](https://github.com/joe307bad/pcli/blob/v0.0.2/src/commands/achievements/analyzer.ts)_
+
+## `pcli achievements:changeset`
+
+Perform actions on a Changesets for an Achievement List
+
+```
+USAGE
+  $ pcli achievements:changeset
+
+OPTIONS
+  -h, --help  show CLI help
+
+EXAMPLE
+  $ pcli achievements:changeset
+```
+
+_See code: [src/commands/achievements/changeset.ts](https://github.com/joe307bad/pcli/blob/v0.0.2/src/commands/achievements/changeset.ts)_
 
 ## `pcli help [COMMAND]`
 

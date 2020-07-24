@@ -2,13 +2,18 @@ import * as R from 'remeda';
 import * as path from 'path';
 import * as fs from 'fs';
 import { pipe } from 'fp-ts/lib/pipeable';
-import { tryCatch, toError, fromNullable, chain, fold, left, right, isLeft } from 'fp-ts/lib/Either';
-import { array, ValidationError, undefined } from 'io-ts';
+import { tryCatch, toError, fromNullable, chain, fold, left, right } from 'fp-ts/lib/Either';
+import * as o from 'fp-ts/lib/Option';
+import { array, ValidationError } from 'io-ts';
 import { failure } from 'io-ts/lib/PathReporter'
+import { createObjectCsvWriter } from 'csv-writer';
+import { filter } from 'fp-ts/lib/Array';
+import { isNone } from 'fp-ts/lib/Option';
 
 import { Parser as parse } from '../../services/parser.service';
 import { RHunk, THunk } from '../../core/definitions';
-import { filter } from 'fp-ts/lib/Array';
+import isEmpty from '../../shared/utils/isEmpty';
+import { getMostRecentFile } from '../../shared/utils/getMostRecentFile';
 
 const CHANGESET_ERRORS = {
     ERROR_GETTING_CHANGESETS_DIR: (path: string, e: any) => `Error accessing Changeset directoory: Directory path:\n${path}\n${e.toString()}`,
@@ -18,7 +23,8 @@ const CHANGESET_ERRORS = {
     ERROR_DECODING_CHANGESET_JSON: (errors: ValidationError[]) => [
         `There was a mismatched type while decoding the Changeset`,
         ...failure(errors),
-    ].join('\n')
+    ].join('\n'),
+    ERROR_WRITING_NEW_CHANGESET: (err: any) => `There was an error writing the new changeset: Error \n${err.toString()}`
 }
 
 enum EAction {
@@ -34,17 +40,8 @@ export class Changeset {
 
         const fullPathToChangeset = (p: string) => path.join(changesetsDirPath, p);
 
-        const mostRecentChangeset = (cs: string[]) => R.pipe(
-            cs,
-            R.sort((a: string, b: string) => {
-                var fullpath = fullPathToChangeset(a);
-                var otherFullPath = fullPathToChangeset(b);
-                const creationTime = fs.statSync(fullpath).ctime;
-                const otherCreationTime = fs.statSync(otherFullPath).ctime
-                return otherCreationTime.getTime() - creationTime.getTime();
-            }),
-            R.first()
-        )
+        const mostRecentChangeset = () =>
+            getMostRecentFile(changesets, changesetsDirPath)
 
         const noChangesetsFoundError =
             toError(CHANGESET_ERRORS.NO_CHANGSETS_FOUND_IN_CHANGESETS_DIR(changesetsDirPath))
@@ -53,7 +50,9 @@ export class Changeset {
             tryCatch(() => fs.readdirSync(changesetsDirPath), err => toError(
                 CHANGESET_ERRORS.ERROR_GETTING_CHANGESETS_DIR(changesetsDirPath, err)
             )),
-            chain(() => fromNullable(noChangesetsFoundError)(mostRecentChangeset(changesets))),
+            chain(() =>
+                fromNullable(noChangesetsFoundError)(mostRecentChangeset())
+            ),
             fold(left, (s) => right(fullPathToChangeset(s))));
     }
 
@@ -84,13 +83,48 @@ export class Changeset {
             R.pick(Object.values(EAction)),
             R.toPairs,
             R.map(x => x[1])
-        ).every(x => isLeft(undefined.decode(x)));
+        ).every(x => isNone(isEmpty(x)));
 
         return tryCatch(() => pipe(
             changeset,
-            filter(isUnchangedHunks)
+            filter(x => !isUnchangedHunks(x))
         ), toError)
     };
+
+    static writeToCsv = (versionsDirPath: string, changesetsDirPath: string, changeset: THunk[]) => {
+        const versions = fs.readdirSync(versionsDirPath);
+
+        const mostRecentChangeset = () =>
+            getMostRecentFile(versions, versionsDirPath)
+
+        const currentVersionNumber = Number(pipe(
+            o.fromNullable(mostRecentChangeset()),
+            o.map(x => x.split('.').slice(0, -1).join('.')),
+            o.getOrElse(() => '1')
+        ))
+
+        const newVersionNumber = currentVersionNumber + 1;
+
+        const changesetFileName = `changeset_${currentVersionNumber}-${newVersionNumber}_${new Date().toISOString()}.csv`
+
+        const writer = createObjectCsvWriter({
+            path: path.join(changesetsDirPath, changesetFileName),
+            header: R.pipe(
+                RHunk.types,
+                R.reduce((acc, x) => ({ ...acc, ...x.props }), {}),
+                R.toPairs,
+                R.map(x => ({ id: x[0], title: x[0] }))
+            )
+        })
+
+        return pipe(
+            tryCatch(async () => await writer.writeRecords(changeset), err =>
+                toError(CHANGESET_ERRORS.ERROR_WRITING_NEW_CHANGESET(err))
+            ),
+            fold(err => left(err), () => right(changesetFileName))
+        )
+
+    }
 
     private static mapJsonToChangeset = (changeset: any[]) => {
         const anyToChangeset = () => R.pipe(
@@ -110,7 +144,7 @@ export class Changeset {
                 return {
                     name,
                     description,
-                    points,
+                    points: Number(points),
                     photo,
                     category,
                     newPoints,
