@@ -30,20 +30,5 @@ export class Analyzer {
                 () => right(ANALYZER_MESSAGES.WELL_FORMED_ACHIEVMENTS_JSON_FILE)
             )
         )
-
     }
-
-    validateChangeset() {
-
-    }
-
-    generateChangesetJson() {
-
-    }
-
-    generateVersionJson() {
-
-    }
-
-
 }

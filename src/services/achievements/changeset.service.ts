@@ -2,12 +2,13 @@ import * as R from 'remeda';
 import * as path from 'path';
 import * as fs from 'fs';
 import { pipe } from 'fp-ts/lib/pipeable';
-import { tryCatch, toError, fromNullable, chain, fold, left, right } from 'fp-ts/lib/Either';
-import { array, ValidationError } from 'io-ts';
+import { tryCatch, toError, fromNullable, chain, fold, left, right, isLeft } from 'fp-ts/lib/Either';
+import { array, ValidationError, undefined } from 'io-ts';
 import { failure } from 'io-ts/lib/PathReporter'
 
 import { Parser as parse } from '../../services/parser.service';
-import { RChangeset, TChangeset } from '../../core/definitions';
+import { RHunk, THunk } from '../../core/definitions';
+import { filter } from 'fp-ts/lib/Array';
 
 const CHANGESET_ERRORS = {
     ERROR_GETTING_CHANGESETS_DIR: (path: string, e: any) => `Error accessing Changeset directoory: Directory path:\n${path}\n${e.toString()}`,
@@ -20,11 +21,14 @@ const CHANGESET_ERRORS = {
     ].join('\n')
 }
 
-const CHANGESET_MESSAGE = {
-    CHANGESET_WELL_FORMED: `The Changeset is well-formed`
+enum EAction {
+    NEW_NAME = 'newName',
+    NEW_CATEGORY = 'newCategory',
+    NEW_POINTS = 'newPoints'
 }
 
 export class Changeset {
+
     static getMostRecent = (changesetsDirPath: string) => {
         const changesets = fs.readdirSync(changesetsDirPath);
 
@@ -56,7 +60,7 @@ export class Changeset {
     static validate = (changesetPath: string) => {
 
         const changesetParsed = (mappedChangeset: any[]) => pipe(
-            array(RChangeset).decode(mappedChangeset),
+            array(RHunk).decode(mappedChangeset),
             fold(
                 errs => left(toError(CHANGESET_ERRORS.ERROR_DECODING_CHANGESET_JSON(errs))),
                 changeset => right(changeset)
@@ -72,6 +76,21 @@ export class Changeset {
             chain(changesetParsed)
         );
     }
+
+    static getChangedHunks = (changeset: THunk[]) => {
+
+        const isUnchangedHunks = (h: THunk) => R.pipe(
+            h,
+            R.pick(Object.values(EAction)),
+            R.toPairs,
+            R.map(x => x[1])
+        ).every(x => isLeft(undefined.decode(x)));
+
+        return tryCatch(() => pipe(
+            changeset,
+            filter(isUnchangedHunks)
+        ), toError)
+    };
 
     private static mapJsonToChangeset = (changeset: any[]) => {
         const anyToChangeset = () => R.pipe(

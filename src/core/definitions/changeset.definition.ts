@@ -2,13 +2,17 @@ import * as t from 'io-ts'
 
 import { RAchievement } from './achievement.definition';
 
-export const RChangeset = t.intersection([
+export const NewProperties = {
+    newPoints: t.string,
+    newCategory: t.string,
+    newName: t.string
+}
+
+export const TNewProperties = t.type(NewProperties);
+
+export const RHunk = t.intersection([
     RAchievement,
-    t.type({
-        newPoints: t.union([t.string, t.undefined]),
-        newCategory: t.union([t.string, t.undefined]),
-        newName: t.union([t.string, t.undefined])
-    })
+    t.partial(NewProperties)
 ])
 
-export type TChangeset = t.TypeOf<typeof RChangeset>
+export type THunk = t.TypeOf<typeof RHunk>

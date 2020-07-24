@@ -12,7 +12,7 @@ const CHANGESET_ERRORS = {
 }
 
 export default class Changeset extends Command {
-    static description = 'Perform actions on Achievement List Changesets'
+    static description = 'Perform actions on a Changesets for an Achievement List'
 
     static examples = [
         `$ pcli achievements:changeset`,
@@ -32,6 +32,8 @@ export default class Changeset extends Command {
         pipe(
             changeset.getMostRecent(changesetsDir.value),
             chain(b => changeset.validate(b)),
+            chain(b => changeset.getChangedHunks(b)),
+            // TODO write to csv file
             fold(
                 e => of(log.error(e.message)),
                 m => of(log.success(m))
