@@ -1,7 +1,7 @@
 {
   "name": "pcli",
   "description": "Points CLI",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Joe Badaczewski @joe307bad",
   "bin": {
     "pcli": "./bin/run"

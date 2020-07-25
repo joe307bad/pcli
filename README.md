@@ -19,7 +19,7 @@ $ npm install -g pcli
 $ pcli COMMAND
 running command...
 $ pcli (-v|--version|version)
-pcli/0.0.2 darwin-x64 node-v14.2.0
+pcli/0.0.3 darwin-x64 node-v10.16.2
 $ pcli --help [COMMAND]
 USAGE
   $ pcli COMMAND
@@ -29,7 +29,7 @@ USAGE
 # Commands
 <!-- commands -->
 * [`pcli achievements:analyzer`](#pcli-achievementsanalyzer)
-* [`pcli achievements:changeset`](#pcli-achievementschangeset)
+* [`pcli achievements:changeset COMMAND`](#pcli-achievementschangeset-command)
 * [`pcli help [COMMAND]`](#pcli-help-command)
 
 ## `pcli achievements:analyzer`
@@ -48,15 +48,15 @@ EXAMPLE
   $ pcli achievements:analyzer
 ```
 
-_See code: [src/commands/achievements/analyzer.ts](https://github.com/joe307bad/pcli/blob/v0.0.2/src/commands/achievements/analyzer.ts)_
+_See code: [src/commands/achievements/analyzer.ts](https://github.com/joe307bad/pcli/blob/v0.0.3/src/commands/achievements/analyzer.ts)_
 
-## `pcli achievements:changeset`
+## `pcli achievements:changeset COMMAND`
 
 Perform actions on a Changesets for an Achievement List
 
 ```
 USAGE
-  $ pcli achievements:changeset
+  $ pcli achievements:changeset COMMAND
 
 OPTIONS
   -h, --help  show CLI help
@@ -65,7 +65,7 @@ EXAMPLE
   $ pcli achievements:changeset
 ```
 
-_See code: [src/commands/achievements/changeset.ts](https://github.com/joe307bad/pcli/blob/v0.0.2/src/commands/achievements/changeset.ts)_
+_See code: [src/commands/achievements/changeset.ts](https://github.com/joe307bad/pcli/blob/v0.0.3/src/commands/achievements/changeset.ts)_
 
 ## `pcli help [COMMAND]`
 
