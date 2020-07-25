@@ -52,8 +52,6 @@ export default class Changeset extends Command {
         const writeToCsv = (c: THunk[]) =>
             changeset.writeToCsv(versionsDir.value, changesetsDir.value, c)
 
-        // TODO why can this not be run twice in a row? the produced CSV 
-        // does not pass validation for some reason
         switch (command) {
             case EChangesetCommands.GEN:
                 pipe(
