@@ -5,7 +5,8 @@ import { RAchievement } from './achievement.definition';
 export const NewProperties = {
     newPoints: t.string,
     newCategory: t.string,
-    newName: t.string
+    newName: t.string,
+    isDuplicate: t.string
 }
 
 export const TNewProperties = t.type(NewProperties);

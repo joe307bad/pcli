@@ -13,11 +13,23 @@ const CHANGESET_ERRORS = {
     VERSIONS_DIR_ENV_VAR_NOT_SET: `VERSIONS_DIR env var not set`
 }
 
+enum EChangesetCommands {
+    GEN = 'gen'
+}
+
 export default class Changeset extends Command {
     static description = 'Perform actions on a Changesets for an Achievement List'
 
     static examples = [
         `$ pcli achievements:changeset`,
+    ]
+
+    static args = [
+        {
+            name: 'command',
+            required: true,
+            options: ['gen']
+        }
     ]
 
     static flags = {
@@ -26,8 +38,10 @@ export default class Changeset extends Command {
 
     async run() {
 
+        const { args } = this.parse(Changeset)
         const changesetsDir = env.CHANGESETS_DIR
         const versionsDir = env.VERSIONS_DIR
+        const command = args.command as EChangesetCommands;
 
         if (isNone(changesetsDir))
             return log.error(CHANGESET_ERRORS.CHANGESET_DIR_ENV_VAR_NOT_SET);
@@ -40,15 +54,18 @@ export default class Changeset extends Command {
 
         // TODO why can this not be run twice in a row? the produced CSV 
         // does not pass validation for some reason
-        pipe(
-            changeset.getMostRecent(changesetsDir.value),
-            chain(b => changeset.validate(b)),
-            chain(b => changeset.getChangedHunks(b)),
-            chain(c => writeToCsv(c)),
-            fold(
-                e => of(log.error(e.message)),
-                m => of(log.success(m))
-            )
-        )
+        switch (command) {
+            case EChangesetCommands.GEN:
+                pipe(
+                    changeset.getMostRecent(changesetsDir.value),
+                    chain(b => changeset.validate(b)),
+                    chain(b => changeset.getChangedHunks(b)),
+                    chain(c => writeToCsv(c)),
+                    fold(
+                        e => of(log.error(e.message)),
+                        m => of(log.success(m))
+                    )
+                )
+        }
     }
 }

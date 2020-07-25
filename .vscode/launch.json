@@ -23,7 +23,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "pcli achievements:changeset",
+            "name": "pcli achievements:changeset gen",
             "skipFiles": [
                 "<node_internals>/**"
             ],
@@ -32,7 +32,8 @@
                 "${workspaceFolder}/lib/**/*.js"
             ],
             "args": [
-                "achievements:changeset"
+                "achievements:changeset",
+                "gen"
             ],
             "console": "integratedTerminal"
         }

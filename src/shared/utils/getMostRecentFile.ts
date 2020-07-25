@@ -1,9 +1,11 @@
 import * as R from 'remeda';
 import * as fs from 'fs';
 import * as path from 'path';
+import { string } from '@oclif/command/lib/flags';
 
-export const getMostRecentFile = (files: string[], dir: string) => R.pipe(
+export const getMostRecentFile = (files: string[], dir: string, extension: string) => R.pipe(
     files,
+    R.filter((a: string) => path.extname(a) === extension),
     R.sort((a: string, b: string) => {
         var fullpath = path.join(dir, a);
         var otherFullPath = path.join(dir, b);

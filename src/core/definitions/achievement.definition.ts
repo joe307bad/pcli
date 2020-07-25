@@ -63,12 +63,14 @@ const RExistentCategory =
         t.identity
     )
 
+// Ordering matters here so input CSV and 
+// output CSV have same column order
 export const RAchievement = t.type({
     name: t.string,
     description: t.string,
-    category: RExistentCategory,
     points: t.number,
-    photo: t.union([t.string, t.null])
+    photo: t.union([t.string, t.null]),
+    category: RExistentCategory
 });
 
 export type TAchievement = t.TypeOf<typeof RAchievement>;

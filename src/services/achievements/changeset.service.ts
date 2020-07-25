@@ -23,14 +23,15 @@ const CHANGESET_ERRORS = {
     ERROR_DECODING_CHANGESET_JSON: (errors: ValidationError[]) => [
         `There was a mismatched type while decoding the Changeset`,
         ...failure(errors),
-    ].join('\n'),
+    ].join('\n\n'),
     ERROR_WRITING_NEW_CHANGESET: (err: any) => `There was an error writing the new changeset: Error \n${err.toString()}`
 }
 
 enum EAction {
     NEW_NAME = 'newName',
     NEW_CATEGORY = 'newCategory',
-    NEW_POINTS = 'newPoints'
+    NEW_POINTS = 'newPoints',
+    IS_DUPLICATE = 'isDuplicate'
 }
 
 export class Changeset {
@@ -41,7 +42,7 @@ export class Changeset {
         const fullPathToChangeset = (p: string) => path.join(changesetsDirPath, p);
 
         const mostRecentChangeset = () =>
-            getMostRecentFile(changesets, changesetsDirPath)
+            getMostRecentFile(changesets, changesetsDirPath, '.csv')
 
         const noChangesetsFoundError =
             toError(CHANGESET_ERRORS.NO_CHANGSETS_FOUND_IN_CHANGESETS_DIR(changesetsDirPath))
@@ -70,7 +71,7 @@ export class Changeset {
             tryCatch(() => fs.readFileSync(changesetPath), err => toError(
                 CHANGESET_ERRORS.ERROR_GETTING_CHANGESET_FILE(changesetPath, err)
             )),
-            chain(b => parse.csvSync<any[]>(b)),
+            chain((b) => parse.csvSync<any[]>(b)),
             chain(Changeset.mapJsonToChangeset),
             chain(changesetParsed)
         );
@@ -95,7 +96,7 @@ export class Changeset {
         const versions = fs.readdirSync(versionsDirPath);
 
         const mostRecentChangeset = () =>
-            getMostRecentFile(versions, versionsDirPath)
+            getMostRecentFile(versions, versionsDirPath, '.csv')
 
         const currentVersionNumber = Number(pipe(
             o.fromNullable(mostRecentChangeset()),
@@ -115,14 +116,14 @@ export class Changeset {
                 R.toPairs,
                 R.map(x => ({ id: x[0], title: x[0] }))
             )
-        })
+        });
 
         return pipe(
             tryCatch(async () => await writer.writeRecords(changeset), err =>
                 toError(CHANGESET_ERRORS.ERROR_WRITING_NEW_CHANGESET(err))
             ),
             fold(err => left(err), () => right(changesetFileName))
-        )
+        );
 
     }
 
@@ -139,7 +140,8 @@ export class Changeset {
                     category,
                     newPoints,
                     newCategory,
-                    newName
+                    newName,
+                    isDuplicate
                 ] = hunk;
                 return {
                     name,
@@ -149,7 +151,8 @@ export class Changeset {
                     category,
                     newPoints,
                     newCategory,
-                    newName
+                    newName,
+                    isDuplicate
                 };
             })
         )
