@@ -19,7 +19,7 @@ $ npm install -g pcli
 $ pcli COMMAND
 running command...
 $ pcli (-v|--version|version)
-pcli/0.0.3 darwin-x64 node-v10.16.2
+pcli/0.0.4 darwin-x64 node-v14.2.0
 $ pcli --help [COMMAND]
 USAGE
   $ pcli COMMAND
@@ -48,7 +48,7 @@ EXAMPLE
   $ pcli achievements:analyzer
 ```
 
-_See code: [src/commands/achievements/analyzer.ts](https://github.com/joe307bad/pcli/blob/v0.0.3/src/commands/achievements/analyzer.ts)_
+_See code: [src/commands/achievements/analyzer.ts](https://github.com/joe307bad/pcli/blob/v0.0.4/src/commands/achievements/analyzer.ts)_
 
 ## `pcli achievements:changeset COMMAND`
 
@@ -65,7 +65,7 @@ EXAMPLE
   $ pcli achievements:changeset
 ```
 
-_See code: [src/commands/achievements/changeset.ts](https://github.com/joe307bad/pcli/blob/v0.0.3/src/commands/achievements/changeset.ts)_
+_See code: [src/commands/achievements/changeset.ts](https://github.com/joe307bad/pcli/blob/v0.0.4/src/commands/achievements/changeset.ts)_
 
 ## `pcli help [COMMAND]`
 
