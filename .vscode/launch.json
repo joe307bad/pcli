@@ -53,6 +53,24 @@
                 "commit"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "pcli achievements:analyzer -f",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/bin/run",
+            "outFiles": [
+                "${workspaceFolder}/lib/**/*.js"
+            ],
+            "args": [
+                "achievements:analyzer",
+                "-f",
+                "/Users/jbadaczewski/Source/bada/jbhs-scripts/roles/points.api/files/achievement-management/versions/8.json"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }

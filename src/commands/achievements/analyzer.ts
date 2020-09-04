@@ -14,7 +14,7 @@ const ANALYZER_ERRORS = {
 }
 
 const ANALYZER_MESSAGES = {
-    WELL_FORMED_ACHIEVMENTS_JSON_FILE: `Achievments JSON is well-formed`
+    WELL_FORMED_ACHIEVMENTS_JSON_FILE: `Achievements JSON is well-formed`
 }
 
 export default class Analyzer extends Command {
