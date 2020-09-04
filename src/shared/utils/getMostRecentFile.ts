@@ -1,7 +1,6 @@
 import * as R from 'remeda';
 import * as fs from 'fs';
 import * as path from 'path';
-import { string } from '@oclif/command/lib/flags';
 
 export const getMostRecentFile = (files: string[], dir: string, extension: string) => R.pipe(
     files,

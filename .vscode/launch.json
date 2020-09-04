@@ -36,6 +36,23 @@
                 "gen"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "pcli achievements:changset commit",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/bin/run",
+            "outFiles": [
+                "${workspaceFolder}/lib/**/*.js"
+            ],
+            "args": [
+                "achievements:changeset",
+                "commit"
+            ],
+            "console": "integratedTerminal"
         }
     ]
 }

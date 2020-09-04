@@ -2,8 +2,9 @@ import * as R from 'remeda';
 import * as path from 'path';
 import * as fs from 'fs';
 import { pipe } from 'fp-ts/lib/pipeable';
-import { tryCatch, toError, fromNullable, chain, fold, left, right } from 'fp-ts/lib/Either';
+import * as e from 'fp-ts/lib/Either';
 import * as o from 'fp-ts/lib/Option';
+import * as a from 'fp-ts/lib/Array';
 import { array, ValidationError } from 'io-ts';
 import { failure } from 'io-ts/lib/PathReporter'
 import { createObjectCsvWriter } from 'csv-writer';
@@ -11,9 +12,14 @@ import { filter } from 'fp-ts/lib/Array';
 import { isNone } from 'fp-ts/lib/Option';
 
 import { Parser as parse } from '../../services/parser.service';
-import { RHunk, THunk } from '../../core/definitions';
+import { RHunk, THunk, NewProperties, TNewProperties } from '../../core/definitions';
 import isEmpty from '../../shared/utils/isEmpty';
 import { getMostRecentFile } from '../../shared/utils/getMostRecentFile';
+import { Mutation, MutationType } from '../../core/definitions/mutation.definition';
+
+declare const BetterObject: {
+    keys<T extends {}>(object: T): (keyof T)[]
+}
 
 const CHANGESET_ERRORS = {
     ERROR_GETTING_CHANGESETS_DIR: (path: string, e: any) => `Error accessing Changeset directoory: Directory path:\n${path}\n${e.toString()}`,
@@ -24,7 +30,8 @@ const CHANGESET_ERRORS = {
         `There was a mismatched type while decoding the Changeset`,
         ...failure(errors),
     ].join('\n\n'),
-    ERROR_WRITING_NEW_CHANGESET: (err: any) => `There was an error writing the new changeset: Error \n${err.toString()}`
+    ERROR_WRITING_NEW_CHANGESET: (err: any) => `There was an error writing the new changeset: Error \n${err.toString()}`,
+    ERROR_CONVERTING_CHANGESET_INTO_MUTATIONS: (err: any) => `There ws an Error converting the changeset into a list of mutations: Error \n${err.toString()}`
 }
 
 enum EAction {
@@ -45,35 +52,35 @@ export class Changeset {
             getMostRecentFile(changesets, changesetsDirPath, '.csv')
 
         const noChangesetsFoundError =
-            toError(CHANGESET_ERRORS.NO_CHANGSETS_FOUND_IN_CHANGESETS_DIR(changesetsDirPath))
+            e.toError(CHANGESET_ERRORS.NO_CHANGSETS_FOUND_IN_CHANGESETS_DIR(changesetsDirPath))
 
         return pipe(
-            tryCatch(() => fs.readdirSync(changesetsDirPath), err => toError(
+            e.tryCatch(() => { }, err => e.toError(
                 CHANGESET_ERRORS.ERROR_GETTING_CHANGESETS_DIR(changesetsDirPath, err)
             )),
-            chain(() =>
-                fromNullable(noChangesetsFoundError)(mostRecentChangeset())
+            e.chain(() =>
+                e.fromNullable(noChangesetsFoundError)(mostRecentChangeset())
             ),
-            fold(left, (s) => right(fullPathToChangeset(s))));
+            e.fold(e.left, (s) => e.right(fullPathToChangeset(s))));
     }
 
     static validate = (changesetPath: string) => {
 
         const changesetParsed = (mappedChangeset: any[]) => pipe(
             array(RHunk).decode(mappedChangeset),
-            fold(
-                errs => left(toError(CHANGESET_ERRORS.ERROR_DECODING_CHANGESET_JSON(errs))),
-                changeset => right(changeset)
+            e.fold(
+                errs => e.left(e.toError(CHANGESET_ERRORS.ERROR_DECODING_CHANGESET_JSON(errs))),
+                changeset => e.right(changeset)
             )
         );
 
         return pipe(
-            tryCatch(() => fs.readFileSync(changesetPath), err => toError(
+            e.tryCatch(() => fs.readFileSync(changesetPath), err => e.toError(
                 CHANGESET_ERRORS.ERROR_GETTING_CHANGESET_FILE(changesetPath, err)
             )),
-            chain((b) => parse.csvSync<any[]>(b)),
-            chain(Changeset.mapJsonToChangeset),
-            chain(changesetParsed)
+            e.chain((b) => parse.csvSync<any[]>(b)),
+            e.chain(Changeset.mapJsonToChangeset),
+            e.chain(changesetParsed)
         );
     }
 
@@ -86,17 +93,19 @@ export class Changeset {
             R.map(x => x[1])
         ).every(x => isNone(isEmpty(x)));
 
-        return tryCatch(() => pipe(
+        const b = e.tryCatch(() => pipe(
             changeset,
             filter(x => !isUnchangedHunks(x))
-        ), toError)
+        ), e.toError)
+
+        return b;
     };
 
     static writeToCsv = (versionsDirPath: string, changesetsDirPath: string, changeset: THunk[]) => {
         const versions = fs.readdirSync(versionsDirPath);
 
         const mostRecentChangeset = () =>
-            getMostRecentFile(versions, versionsDirPath, '.csv')
+            getMostRecentFile(versions, versionsDirPath, '.json')
 
         const currentVersionNumber = Number(pipe(
             o.fromNullable(mostRecentChangeset()),
@@ -119,12 +128,44 @@ export class Changeset {
         });
 
         return pipe(
-            tryCatch(async () => await writer.writeRecords(changeset), err =>
-                toError(CHANGESET_ERRORS.ERROR_WRITING_NEW_CHANGESET(err))
+            e.tryCatch(async () => await writer.writeRecords(changeset), err =>
+                e.toError(CHANGESET_ERRORS.ERROR_WRITING_NEW_CHANGESET(err))
             ),
-            fold(err => left(err), () => right(changesetFileName))
+            e.fold(err => e.left(err), () => e.right(changesetFileName))
         );
 
+    }
+
+    static toCommandList = (changeset: THunk[]) => {
+
+        const mutations = () => changeset.flatMap(cs =>
+            Object.keys(NewProperties).reduce((acc: Mutation[], np) => {
+                const newValue = (cs as any)[np];
+                const mutatedColumn = (MutationType as any)[np];
+                if (newValue?.toLowerCase().includes('duplicate')) {
+                    acc.push({
+                        newValue: undefined,
+                        name: cs.name,
+                        column: MutationType.IS_DUPLICATE
+                    })
+                } else if (newValue?.trim() !== '') {
+                    acc.push({
+                        newValue: mutatedColumn === MutationType.newPoints
+                            ? Number(newValue)
+                            : newValue,
+                        name: cs.name,
+                        column: mutatedColumn
+                    })
+                }
+                return acc;
+            }, []))
+
+        return pipe(
+            e.tryCatch(() => mutations(), err =>
+                e.toError(CHANGESET_ERRORS.ERROR_CONVERTING_CHANGESET_INTO_MUTATIONS(err))
+            ),
+            e.fold(err => e.left(err), (mutations) => e.right(mutations))
+        );;
     }
 
     private static mapJsonToChangeset = (changeset: any[]) => {
@@ -158,7 +199,7 @@ export class Changeset {
         )
 
         return pipe(
-            tryCatch(() => anyToChangeset(), err => toError(
+            e.tryCatch(() => anyToChangeset(), err => e.toError(
                 CHANGESET_ERRORS.ERROR_MAPPING_RAW_JSON_TO_CHANGESET_WITHOUT_IOTS(err)
             ))
         )

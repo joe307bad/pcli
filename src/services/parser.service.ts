@@ -1,7 +1,7 @@
 import * as t from 'io-ts'
-import {failure} from 'io-ts/lib/PathReporter'
-import {pipe} from 'fp-ts/lib/pipeable'
-import {Either, fold, left, right, fromNullable} from 'fp-ts/lib/Either'
+import { failure } from 'io-ts/lib/PathReporter'
+import { pipe } from 'fp-ts/lib/pipeable'
+import { Either, fold, left, right, fromNullable } from 'fp-ts/lib/Either'
 import * as parse from 'csv-parse/lib/sync'
 
 const PARSER_ERROR = {
@@ -16,52 +16,52 @@ const PARSER_ERROR = {
 type TDecoder<A> = (i: unknown) => Either<t.Errors, A>;
 
 export class Parser {
-    static JSON = <T>(json: string, fileName: string, decoder: TDecoder<T>) =>
-      new Promise<Either<Error, T>>(resolve => {
-        try {
-          const parsed = JSON.parse(json)
-          pipe(
-            decoder(parsed),
-            fold(
-              errors => resolve(
-                left(new Error(PARSER_ERROR.ERROR_DECODING_JSON(errors, fileName)))
-              ),
-              decoded => resolve(right(decoded))
-            )
-          )
-        } catch (e) {
-          resolve(left(new Error(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e))))
-        }
-      })
-
-    static JSONSync = <T>(json: string, fileName: string, decoder: TDecoder<T>) => {
+  static JSON = <T>(json: string, fileName: string, decoder: TDecoder<T>) =>
+    new Promise<Either<Error, T>>(resolve => {
       try {
         const parsed = JSON.parse(json)
-        return pipe(
+        pipe(
           decoder(parsed),
           fold(
-            errors =>
-              left(new Error(PARSER_ERROR.ERROR_DECODING_JSON(errors, fileName))),
-            decoded => right(decoded)
+            errors => resolve(
+              left(new Error(PARSER_ERROR.ERROR_DECODING_JSON(errors, fileName)))
+            ),
+            decoded => resolve(right(decoded))
           )
         )
       } catch (e) {
-        return left(new Error(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e)))
+        resolve(left(new Error(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e))))
       }
-    }
+    })
 
-    static csvSync = <T>(buffer: Buffer): Either<Error, T> => {
-      try {
-        const parsed = parse(buffer)
-        return pipe(
-          fromNullable(new Error(PARSER_ERROR.ERROR_PARSING_CSV_BUFFER()))(parsed),
-          fold(
-            err => left(err),
-            decoded => right(decoded)
-          )
+  static JSONSync = <T>(json: string, fileName: string, decoder: TDecoder<T>) => {
+    try {
+      const parsed = JSON.parse(json)
+      return pipe(
+        decoder(parsed),
+        fold(
+          errors =>
+            left(new Error(PARSER_ERROR.ERROR_DECODING_JSON(errors, fileName))),
+          decoded => right(decoded)
         )
-      } catch (e) {
-        return left(new Error(PARSER_ERROR.ERROR_PARSING_CSV_BUFFER(e)))
-      }
+      )
+    } catch (e) {
+      return left(new Error(PARSER_ERROR.ERROR_PARSING_JSON_FILE(fileName, e)))
     }
+  }
+
+  static csvSync = <T>(buffer: Buffer): Either<Error, T> => {
+    try {
+      const parsed = parse(buffer)
+      return pipe(
+        fromNullable(new Error(PARSER_ERROR.ERROR_PARSING_CSV_BUFFER()))(parsed),
+        fold(
+          err => left(err),
+          decoded => right(decoded)
+        )
+      )
+    } catch (e) {
+      return left(new Error(PARSER_ERROR.ERROR_PARSING_CSV_BUFFER(e)))
+    }
+  }
 }

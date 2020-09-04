@@ -1,7 +1,7 @@
 import { Command, flags } from '@oclif/command'
 import { fromNullable, isSome, map, isNone } from 'fp-ts/lib/Option';
 import { pipe } from 'fp-ts/lib/pipeable';
-import * as te from 'fp-ts/lib/TaskEither';
+import * as e from 'fp-ts/lib/Either';
 import { findFirst } from 'fp-ts/lib/Array';
 
 import env from '../../shared/env';
@@ -11,6 +11,10 @@ import { Analyzer as analyzer } from '../../services';
 
 const ANALYZER_ERRORS = {
     NO_ACHIEVMENTS_JSON_FILE_SPECIFIED: "There was no Achievements JSON specified in the .env file or using the --file flag"
+}
+
+const ANALYZER_MESSAGES = {
+    WELL_FORMED_ACHIEVMENTS_JSON_FILE: `Achievments JSON is well-formed`
 }
 
 export default class Analyzer extends Command {
@@ -44,10 +48,10 @@ export default class Analyzer extends Command {
 
         pipe(
             analyzer.validateList(file.value),
-            te.fold(
-                e => te.of(log.error(e.message)),
-                m => te.of(log.success(m))
+            e.fold(
+                err => e.of(log.error(err.message)),
+                m => e.of(log.success(ANALYZER_MESSAGES.WELL_FORMED_ACHIEVMENTS_JSON_FILE))
             )
-        )()
+        )
     }
 }

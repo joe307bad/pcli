@@ -66,8 +66,8 @@ const RExistentCategory =
 // Ordering matters here so input CSV and 
 // output CSV have same column order
 export const RAchievement = t.type({
-    name: t.string,
     description: t.string,
+    name: t.string,
     points: t.number,
     photo: t.union([t.string, t.null]),
     category: RExistentCategory
