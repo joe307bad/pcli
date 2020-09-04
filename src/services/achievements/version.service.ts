@@ -63,6 +63,9 @@ export class Version {
                             points: Number(m.newValue) ?? 0
                         }
                         break;
+                    case MutationType.IS_DUPLICATE:
+                        acc.splice(ai, 1);
+                        break;
                 }
             }
             return acc
