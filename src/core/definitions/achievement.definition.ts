@@ -44,16 +44,24 @@ const RExistentCategory =
                     ? e.right(true)
                     : e.left(Error(categoryErrors.CATEGORY_DOES_NOT_EXIST(category)))
 
+
             const isValidCategory = pipe(
                 isCategoriesJsonFileEnvVarSet,
                 e.chain(j => e.tryCatch(
                     () => fs.readFileSync(j),
                     err => e.toError(categoryErrors.ERROR_GETTING_FILE))
                 ),
-                e.chain(availableCategories),
+                e.chain(e => {
+                    const b = availableCategories(e)
+                    // debugger;
+                    return b;
+                }),
                 e.chain(categories => isCategoryExistent(category, categories))
             )
 
+            if (e.isLeft(isValidCategory)) {
+                // debugger;
+            }
             if (e.isLeft(isValidCategory))
                 return t.failure(category, c)
 
